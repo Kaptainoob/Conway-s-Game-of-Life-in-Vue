@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
-/dist
+dist/
+public/
+.firebase/
 
 # local env files
 .env.local
