@@ -324,4 +324,14 @@ export default {
     background-color: var(--main-grey);
     animation-name: from-alive-to-dead;
   }
+
+  @keyframes from-dead-to-alive {
+    from {background-color: var(--main-grey);}
+    to {background-color: var(--primary-color);}
+  }
+
+  @keyframes from-alive-to-dead {
+    from {background-color: var(--primary-color);}
+    to {background-color: var(--main-grey);}    
+  }
 </style>

@@ -22,7 +22,7 @@ export default {
   --primary-color:  rgb(97, 0, 189);
   --main-grey: rgb(185, 185, 185);
   --box-shadow-color: rgba(0,0,0,0.6);
-  --main-text-color: rgb(20, 20, 20);
+  --main-text-color: rgb(40, 40, 40);
   --main-background-color: rgb(250, 250, 250);
    --animation-duration: 0.2s;
 } */
@@ -32,7 +32,7 @@ export default {
   --primary-color:  rgb(43, 255, 0);
   --main-grey: rgb(70, 70, 70);
   --box-shadow-color: rgba(255, 255, 255, 0.6);
-  --main-text-color: rgb(240, 240, 240);
+  --main-text-color: rgb(220, 220, 220);
   --main-background-color: rgb(20, 20, 20);
   --animation-duration: 0.4s;
 }
@@ -48,6 +48,7 @@ body {
   min-height: 100%;
   margin: 0;
   background-color: var(--main-background-color);
+  color: var(--main-text-color);
 }
 
 #app {
