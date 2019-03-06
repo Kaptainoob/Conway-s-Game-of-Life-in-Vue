@@ -13,7 +13,7 @@
         </div>
         <div>
           <input :class="isTimerRunning ? 'slider disabled-slider' : 'slider active-slider'"
-            type="range" min="4" max="16"
+            type="range" min="4" max="32"
             v-model="size" @change="createBoard" :disabled="isTimerRunning"
           > 
         </div>                          
@@ -41,7 +41,7 @@
         </div>
         <div>
           <input :class="isTimerRunning ? 'slider disabled-slider' : 'slider active-slider'"
-            type="range" min="0.4" max="2" step="0.1"
+            type="range" min="0.1" max="2" step="0.1"
             v-model="timerSpeed" :disabled="isTimerRunning"
           > 
         </div>                
@@ -68,23 +68,14 @@
       <span>Generation: <strong>{{ generationCounter }}</strong></span>
     </div>
     <div class="container">
-      <div class="board" v-bind:style="`
-        grid-template-columns: ${gridTemplateStyle};
-        grid-template-rows: ${gridTemplateStyle};
-      `">
-        <div
-          v-for="(cell, index) in currentGeneration"
-          :key="index" :class="cell.isAlive ? 'cell alive' : 'cell dead'"
-          v-bind:style="`
-            grid-column-start: ${cell.column + 1}; 
-            grid-column-end: ${cell.column + 1};
-            grid-row-start: ${cell.row + 1};
-            grid-row-end: ${cell.row + 1};
-            animation-duration: ${timerSpeed / 3}s;
-            ${isEditable? 'cursor: pointer;' : null}
-          `"
-          @click="isEditable ? changeCellLiveState(cell.row, cell.column) : null"  
-        ></div>
+      <div class="board">
+        <div v-for="(row, index) in currentGeneration" :key="index" class="row">
+          <div v-for="(cell, index) in row" :key="index"
+            :class="cell.isAlive ? 'cell alive' : 'cell dead'"
+            v-bind:style="`animation-duration: ${cellAnimationDuration}s; ${isEditable? 'cursor: pointer;' : null}`"
+            @click="isEditable ? changeCellLiveState(cell.row, cell.column) : null"  
+          ></div>
+        </div>
       </div>      
     </div>
     <br>
@@ -106,33 +97,41 @@ export default {
       liveProbability: 0.5,
       timerSpeed: 1,
       currentGeneration: [],
-      timer: null,
       isTimerRunning: false,
       generationCounter: 0,
       isEditable: true
     };
   },
   computed: {
-    gridTemplateStyle() {
-      return `repeat(${Math.sqrt(this.currentGeneration.length)}, 1.0em)`
+    cellAnimationDuration() {
+      if (this.isEditable) {
+        return 0.6
+      } else {
+        return this.timerSpeed / 3
+      }
     }
   },
   methods: {
     createBoard() {
-      const cells = [];
+      const cells = []
       for (let r = 0; r < this.size; r++) {
-       for (let c = 0; c < this.size; c++) {
-         const isAlive = Math.random() <= this.liveProbability ? true : false
-         const cell = { row: r, column: c, isAlive: isAlive, liveNeighbours: null }
-         cells.push(cell)
-       } 
+        const row = [];
+        for (let c = 0; c < this.size; c++) {
+          const isAlive = Math.random() <= this.liveProbability ? true : false
+          const cell = { row: r, column: c, isAlive: isAlive, liveNeighbours: null }
+          row.push(cell)
+        }
+        cells.push(row)
       }
       this.currentGeneration = cells
       this.generationCounter = 0
-    },
+      console.log(this.currentGeneration)
+    },    
     clearBoard() {
-      this.currentGeneration.forEach(cell => {
-        cell.isAlive = false
+      this.currentGeneration.forEach(row => {
+        row.forEach(cell => {
+          cell.isAlive = false
+        })        
       })
       this.generationCounter = 0
     },
@@ -142,10 +141,7 @@ export default {
       certainCell.isAlive = !isAlive
     },
     findCell(rowIndex, columnIndex) {
-      const certainCell = this.currentGeneration.find(cell => {
-        return cell.row == rowIndex && cell.column == columnIndex
-      })
-      return certainCell
+      return this.currentGeneration[rowIndex][columnIndex]
     }, 
     calculateLiveNeigboursToOneCell(rowIndex, columnIndex) {
       let number = 0
@@ -208,8 +204,10 @@ export default {
       return number      
     },
     calculateLiveNeighboursToAllCells() {
-      this.currentGeneration.forEach(cell => {
-        cell.liveNeighbours = this.calculateLiveNeigboursToOneCell(cell.row, cell.column)
+      this.currentGeneration.forEach(row => {
+        row.forEach(cell => {
+          cell.liveNeighbours = this.calculateLiveNeigboursToOneCell(cell.row, cell.column)
+        })       
       })
     },
     calculateNextLiveState(currentLiveState, liveNeighbours) {
@@ -231,13 +229,17 @@ export default {
       this.calculateLiveNeighboursToAllCells()
       const nextGeneration = []
       let cellsAlive = 0
-      this.currentGeneration.forEach(currentCell => {
-        const isAlive = this.calculateNextLiveState(currentCell.isAlive, currentCell.liveNeighbours)
-        const nextCell = { row: currentCell.row, column: currentCell.column, isAlive: isAlive, liveNeighbours: null }
-        nextGeneration.push(nextCell)
-        if (isAlive) {
-          cellsAlive++
-        }
+      this.currentGeneration.forEach(currentRow => {
+        const nextRow = []
+        currentRow.forEach(currentCell => {
+          const isAlive = this.calculateNextLiveState(currentCell.isAlive, currentCell.liveNeighbours)
+          const nextCell = { row: currentCell.row, column: currentCell.column, isAlive: isAlive, liveNeighbours: null }
+          nextRow.push(nextCell)
+          if (isAlive) {
+            cellsAlive++
+          }          
+        })
+        nextGeneration.push(nextRow)
       })
       this.currentGeneration = nextGeneration
       this.generetionCounter = this.generationCounter++
@@ -248,14 +250,19 @@ export default {
     startTimer() {
       this.isTimerRunning = true
       this.isEditable = false
-      this.timer = setInterval(() => {
+      this.tickTock()
+    },
+    tickTock() {
+      if (this.isTimerRunning) {
         this.createNextGeneration()
-      }, this.timerSpeed * 1000)
+        setTimeout(() => {
+          this.tickTock()
+        }, this.timerSpeed * 1000)
+      }
     },
     stopTimer() {
       this.isTimerRunning = false
       this.isEditable = true
-      clearInterval(this.timer)
     }
   },
   created() {
@@ -270,49 +277,51 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    padding: 1.2em 0 1.2em 0;
+    padding: 1.2rem 0 1.2rem 0;
   }
 
   .container > div {
-    margin: 0 0.2em 0 0.2em;
+    margin: 0 0.2rem 0 0.2rem;
   } 
 
   .column-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;    
+    justify-content: center;  
+    padding: 0 0.4rem 0 0.4em  
   }
   
   .column-container > div {
-    margin: 0.2em 0 0.2em 0;
-  }
-
-  .board {
-    display: grid;
-    grid-row-gap: 0.7em;
-    grid-column-gap: 0.7em
-
+    margin: 0.2rem 0 0.2rem 0;
   }
 
   .title {
-    font-size: 2em;
+    font-size: 2rem;
     font-weight: bold;
     font-style: italic;
   }
 
   .value {
-    font-size: 2em;
+    font-size: 2rem;
+  }
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .row {
     display: flex;
     flex-direction: row;
+    justify-content: center;
   }
 
   .cell {
-    width: 1.2em;
-    height: 1.2em;
-    box-shadow: 0em 0.25em 0.75em 0px var(--box-shadow-color);
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0.22rem;
+    box-shadow: 0rem 0.22rem 0.66rem 0 var(--box-shadow-color);
   }
 
   .alive {

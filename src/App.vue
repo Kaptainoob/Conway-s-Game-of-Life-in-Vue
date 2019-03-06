@@ -17,6 +17,10 @@ export default {
 </script>
 
 <style>
+:root {
+  --animation-duration: 0.4s;
+}
+
 /* Light mode */
 /* :root {
   --primary-color:  rgb(97, 0, 189);
@@ -24,17 +28,15 @@ export default {
   --box-shadow-color: rgba(0,0,0,0.6);
   --main-text-color: rgb(40, 40, 40);
   --main-background-color: rgb(250, 250, 250);
-   --animation-duration: 0.2s;
 } */
 
 /* Dark mode */
 :root {
   --primary-color:  rgb(43, 255, 0);
-  --main-grey: rgb(70, 70, 70);
-  --box-shadow-color: rgba(255, 255, 255, 0.6);
+  --main-grey: rgb(50, 50, 50);
+  --box-shadow-color: rgba(255, 255, 255, 0.3);
   --main-text-color: rgb(220, 220, 220);
   --main-background-color: rgb(20, 20, 20);
-  --animation-duration: 0.4s;
 }
 
 html {
