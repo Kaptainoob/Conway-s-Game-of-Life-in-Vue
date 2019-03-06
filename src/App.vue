@@ -130,8 +130,8 @@ button {
 }
 
 @keyframes slider-from-active-to-disabled {
-  from {background-color: var(--main-grey);}
-  to {background-color: var(--primary-color);}
+  from {background-color: var(--primary-color);}
+  to {background-color: var(--main-grey);}
 }
 
 @keyframes slider-from-disabled-to-active {

@@ -13,7 +13,7 @@
         </div>
         <div>
           <input :class="isTimerRunning ? 'slider disabled-slider' : 'slider active-slider'"
-            type="range" min="4" max="32"
+            type="range" min="4" max="48"
             v-model="size" @change="createBoard" :disabled="isTimerRunning"
           > 
         </div>                          
@@ -71,8 +71,8 @@
       <div class="board">
         <div v-for="(row, index) in currentGeneration" :key="index" class="row">
           <div v-for="(cell, index) in row" :key="index"
-            :class="cell.isAlive ? 'cell alive' : 'cell dead'"
-            v-bind:style="`animation-duration: ${cellAnimationDuration}s; ${isEditable? 'cursor: pointer;' : null}`"
+            :class="cell.isAlive ? 'alive' : 'dead'"
+            v-bind:style="`${cellStyles}; ${cellAnimationDurationStyle}; ${isEditable? 'cursor: pointer;' : null}`"
             @click="isEditable ? changeCellLiveState(cell.row, cell.column) : null"  
           ></div>
         </div>
@@ -99,20 +99,33 @@ export default {
       currentGeneration: [],
       isTimerRunning: false,
       generationCounter: 0,
-      isEditable: true
+      isEditable: true,
+      cellStyles: null
     };
   },
   computed: {
-    cellAnimationDuration() {
+    cellAnimationDurationStyle() {
       if (this.isEditable) {
-        return 0.6
+        return 'animation-duration: var(--animation-duration)'
       } else {
-        return this.timerSpeed / 3
+        return `animation-duration: ${this.timerSpeed / 3}s`
       }
     }
   },
   methods: {
+    calculateCellStyles() {
+      const basicSize = 1.25
+      const basicMargin = 0.25
+      let multiplier = 8 / this.size
+      return `
+        width: ${basicSize * multiplier}rem;
+        height: ${basicSize * multiplier}rem;
+        margin: ${basicMargin * multiplier}rem;
+        box-shadow: 0 ${basicMargin * multiplier}rem ${3 * basicMargin * multiplier}rem 0 var(--box-shadow-color)
+      `
+    },    
     createBoard() {
+      this.cellStyles = this.calculateCellStyles()
       const cells = []
       for (let r = 0; r < this.size; r++) {
         const row = [];
@@ -145,63 +158,28 @@ export default {
     }, 
     calculateLiveNeigboursToOneCell(rowIndex, columnIndex) {
       let number = 0
-      // Top middle
-      if (columnIndex > 0) {
-        const isCellAlive = this.findCell(rowIndex, columnIndex - 1).isAlive
+      const neighboursCooridinates = [
+        { r: -1, c: 0 }, { r: -1, c: 1 }, { r: 0, c: 1 }, { r: 1, c: 1 },
+        { r: 1, c: 0 }, { r: 1, c: -1 }, { r: 0, c: -1 }, { r: -1, c: -1 }
+      ]
+      neighboursCooridinates.forEach((neighbourCooridinates) => {
+        const getIndex = (i) => {
+          if (i < 0) {
+            return this.size - 1
+          } else if (i > this.size - 1) {
+            return 0
+          } else {
+            return i
+          }
+        }
+        const row = getIndex(rowIndex + neighbourCooridinates.r)
+        const column = getIndex(columnIndex + neighbourCooridinates.c)
+        const isCellAlive = this.findCell(row, column).isAlive
         if (isCellAlive) {
           number++
-        }
-      }    
-      // Top right
-      if (rowIndex < this.size - 1 && columnIndex > 0) {
-        const isCellAlive = this.findCell(rowIndex + 1, columnIndex - 1).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Center right
-      if (rowIndex < this.size - 1) {
-        const isCellAlive = this.findCell(rowIndex + 1, columnIndex).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Bottom right
-      if (rowIndex < this.size - 1 && columnIndex < this.size - 1) {
-        const isCellAlive = this.findCell(rowIndex + 1, columnIndex + 1).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Bottom middle
-      if (columnIndex < this.size - 1) {
-        const isCellAlive = this.findCell(rowIndex, columnIndex + 1).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Bottom left
-      if (rowIndex > 0 && columnIndex < this.size - 1) {
-        const isCellAlive = this.findCell(rowIndex - 1, columnIndex + 1).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Center left
-      if (rowIndex > 0) {
-        const isCellAlive = this.findCell(rowIndex - 1, columnIndex).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }
-      // Top left
-      if (rowIndex > 0 && columnIndex > 0) {
-        const isCellAlive = this.findCell(rowIndex - 1, columnIndex - 1).isAlive
-        if (isCellAlive) {
-          number++
-        }
-      }     
-      return number      
+        }        
+      })
+      return number
     },
     calculateLiveNeighboursToAllCells() {
       this.currentGeneration.forEach(row => {
@@ -229,6 +207,7 @@ export default {
       this.calculateLiveNeighboursToAllCells()
       const nextGeneration = []
       let cellsAlive = 0
+      let stateChanges = 0
       this.currentGeneration.forEach(currentRow => {
         const nextRow = []
         currentRow.forEach(currentCell => {
@@ -237,13 +216,16 @@ export default {
           nextRow.push(nextCell)
           if (isAlive) {
             cellsAlive++
+          }
+          if (currentCell.isAlive != nextCell.isAlive) {
+            stateChanges++
           }          
         })
         nextGeneration.push(nextRow)
       })
       this.currentGeneration = nextGeneration
       this.generetionCounter = this.generationCounter++
-      if (cellsAlive == 0) {
+      if (cellsAlive == 0 || stateChanges == 0) {
         this.stopTimer()
       }
     },
@@ -277,7 +259,7 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    padding: 1.2rem 0 1.2rem 0;
+    padding: 1.2rem 0.8rem 1.2rem 0.8rem;
   }
 
   .container > div {
@@ -299,6 +281,7 @@ export default {
     font-size: 2rem;
     font-weight: bold;
     font-style: italic;
+    margin: 1rem 0 1rem 0;
   }
 
   .value {
@@ -315,13 +298,6 @@ export default {
     display: flex;
     flex-direction: row;
     justify-content: center;
-  }
-
-  .cell {
-    width: 1.2rem;
-    height: 1.2rem;
-    margin: 0.22rem;
-    box-shadow: 0rem 0.22rem 0.66rem 0 var(--box-shadow-color);
   }
 
   .alive {
