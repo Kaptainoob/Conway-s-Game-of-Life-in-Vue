@@ -1,6 +1,9 @@
 <template>
   <div id="app">
     <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <div class="color-mode-switcher-container">
+      <button class="button-primary color-mode-switcher" @click="changeColorMode()">Change colors</button>
+    </div>
     <HelloWorld/>
   </div>
 </template>
@@ -12,6 +15,39 @@ export default {
   name: 'app',
   components: {
     HelloWorld
+  },
+  data() {
+    return {
+      isDarkModeOn: true
+    }
+  },
+  methods: {
+    changeColorMode() {
+      console.log('changeColorMode method');
+      if (this.isDarkModeOn) {
+        this.turnLightModeOn()
+      } else {
+        this.turnDarkModeOn()
+      }
+    },
+    turnDarkModeOn() {
+      const root = document.documentElement;
+      root.style.setProperty('--primary-color', 'rgb(43, 255, 0)');
+      root.style.setProperty('--main-grey', 'rgb(50, 50, 50)');
+      root.style.setProperty('--box-shadow-color', 'rgba(255, 255, 255, 0.3)');
+      root.style.setProperty('--main-text-color', 'rgb(220, 220, 220)');
+      root.style.setProperty('--main-background-color', 'rgb(20, 20, 20)');
+      this.isDarkModeOn = true;
+    },
+    turnLightModeOn() {
+      const root = document.documentElement;
+      root.style.setProperty('--primary-color', 'rgb(97, 0, 189)');
+      root.style.setProperty('--main-grey', 'rgb(185, 185, 185)');
+      root.style.setProperty('--box-shadow-color', 'rgba(0,0,0,0.6)');
+      root.style.setProperty('--main-text-color', 'rgb(40, 40, 40)');
+      root.style.setProperty('--main-background-color', 'rgb(250, 250, 250)');
+      this.isDarkModeOn = false;
+    }
   }
 }
 </script>
@@ -23,7 +59,7 @@ export default {
 
 /* Light mode */
 /* :root {
-  --primary-color:  rgb(97, 0, 189);
+  --primary-color: rgb(97, 0, 189);
   --main-grey: rgb(185, 185, 185);
   --box-shadow-color: rgba(0,0,0,0.6);
   --main-text-color: rgb(40, 40, 40);
@@ -60,6 +96,7 @@ body {
   text-align: center;
   color: var(--main-text-color);
   background-color: var(--main-background-color);
+  position: relative;
 }
 
 a {
@@ -79,6 +116,10 @@ button {
   font-size: 1em;
   border: 1px solid;
   transition-duration: var(--animation-duration);
+}
+
+button:focus {
+  outline: 0;
 }
 
 .button-primary {
@@ -137,5 +178,15 @@ button {
 @keyframes slider-from-disabled-to-active {
   from {background-color: var(--main-grey);}
   to {background-color: var(--primary-color);}
+}
+
+.color-mode-switcher-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;    
+}
+
+.color-mode-switcher {
+  font-size: 0.8rem;
 }
 </style>
